@@ -6,8 +6,6 @@
 
 ---
 
-## What I Did
-
 This Data Bit examines two decades of U.S. weather fatality data to argue that **extreme heat is America's deadliest natural disaster** — killing more people than hurricanes, tornadoes, and floods combined — yet remains uncounted, underfunded, and unclassified as a federal disaster.
 
 The piece makes two specific, data-driven arguments:
@@ -72,8 +70,7 @@ The 2005 hurricane figure (1,094 deaths, almost entirely from Katrina) is exclud
 
 ---
 
-## 🔗 View the Final Piece
+## View the Final Piece
 
-👉 **[Click here to read the article](https://raw.githack.com/data-journalism-26/data-bit-2-ashley/main/index.html)**
+ **[Click here to read the article](https://raw.githack.com/data-journalism-26/data-bit-2-ashley-razo/main/index.html)**
 
-*(Update the URL above with your actual repository name before submitting.)*
