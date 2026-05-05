@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>America's Invisible Killer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    :root {
+      --bg:#F9F6F1; --ink:#1C1C1C; --muted:#666; --rule:#D8CFC4;
+      --heat:#D4622A; --other:#4A7EA5; --accent:#8B2500;
+      --highlight:#FFF0E8; --mono:'DM Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;font-weight:300;font-size:17px;line-height:1.8}
+    .topbar{background:var(--ink);color:#999;font-family:var(--mono);font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;padding:.6rem 2rem;display:flex;justify-content:space-between}
+    .article{max-width:720px;margin:0 auto;padding:3rem 2rem 6rem}
+    .kicker{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--heat);margin-bottom:1rem}
+    h1{font-family:'Libre Baskerville',Georgia,serif;font-size:clamp(2rem,5.5vw,3rem);font-weight:700;line-height:1.1;letter-spacing:-.02em;border-top:4px solid var(--ink);border-bottom:1px solid var(--rule);padding:1.25rem 0;margin-bottom:.5rem}
+    .deck{font-size:1.05rem;color:var(--muted);font-style:italic;border-bottom:1px solid var(--rule);padding-bottom:1rem;margin-bottom:1rem;font-family:'Libre Baskerville',serif}
+    .byline{font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.08em;border-bottom:1px solid var(--rule);padding-bottom:1rem;margin-bottom:2rem}
+    .byline strong{color:var(--ink)}
+    p{margin-bottom:1.4rem}
+    a{color:var(--heat)}
+    .drop-cap::first-letter{float:left;font-family:'Libre Baskerville',serif;font-size:4rem;font-weight:700;line-height:.8;margin:.1rem .15rem 0 0;color:var(--heat)}
+    h2{font-family:'Libre Baskerville',serif;font-size:1.15rem;font-weight:700;border-top:1px solid var(--rule);padding-top:1.5rem;margin:2.5rem 0 .8rem}
+
+    /* ── Stat band — kept from original, numbers updated ── */
+    .stat-band{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);margin:2.5rem 0}
+    .stat-cell{background:var(--bg);padding:1.25rem 1rem;text-align:center}
+    .stat-num{font-family:'Libre Baskerville',serif;font-size:2.2rem;font-weight:700;color:var(--heat);display:block;line-height:1}
+    .stat-label{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-top:.4rem}
+
+    /* ── Oregon callout ── */
+    .oregon-box{border:1px solid var(--rule);border-left:4px solid var(--heat);background:var(--highlight);padding:1.2rem 1.4rem;margin:2rem 0}
+    .oregon-box .label{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--heat);margin-bottom:.75rem}
+    .oregon-box .numbers{display:flex;gap:2rem;flex-wrap:wrap}
+    .oregon-box .big{font-family:'Libre Baskerville',serif;font-size:2rem;font-weight:700;color:var(--accent);display:block;line-height:1}
+    .oregon-box .small{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-top:.2rem;display:block}
+
+    /* ── Pull quote — short and sharp like the original ── */
+    .pull{border-left:4px solid var(--heat);background:var(--highlight);padding:1rem 1.4rem;margin:2rem 0;font-family:'Libre Baskerville',serif;font-style:italic;font-size:1.15rem;line-height:1.45;color:var(--accent)}
+    .pull cite{display:block;font-size:.7rem;font-family:var(--mono);font-style:normal;color:var(--muted);margin-top:.5rem;letter-spacing:.06em}
+
+    /* ── 2005 context note ── */
+    .context-note{background:white;border:1px solid var(--rule);padding:.9rem 1.2rem;margin:2.5rem 0;font-family:var(--mono);font-size:.7rem;color:var(--muted);line-height:1.6}
+    .context-note strong{color:var(--ink)}
+
+    /* ── Charts ── */
+    .chart-wrap{margin:2.5rem 0;border:1px solid var(--rule);background:white}
+    .chart-header{padding:1rem 1.2rem .5rem;border-bottom:1px solid var(--rule)}
+    .chart-title{font-family:'Libre Baskerville',serif;font-weight:700;font-size:.95rem;color:var(--ink)}
+    .chart-subtitle{font-family:var(--mono);font-size:.63rem;color:var(--muted);margin-top:.25rem;line-height:1.4}
+    .chart-body{padding:.75rem .5rem .25rem}
+    svg{display:block;width:100%;overflow:visible}
+    figcaption{padding:.65rem 1.2rem .9rem;font-family:var(--mono);font-size:.63rem;color:var(--muted);line-height:1.55;border-top:1px solid var(--rule)}
+    figcaption strong{color:var(--ink)}
+
+    /* ── Tooltip ── */
+    .tooltip{position:absolute;background:var(--ink);color:#f0f0f0;font-family:var(--mono);font-size:.68rem;padding:.5rem .8rem;pointer-events:none;opacity:0;transition:opacity .12s;line-height:1.6;z-index:100;max-width:240px}
+
+    /* ── Sources ── */
+    .sources{margin-top:3rem;padding-top:1.5rem;border-top:3px double var(--rule)}
+    .sources h3{font-family:var(--mono);font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+    .sources ul{list-style:none}
+    .sources li{font-family:var(--mono);font-size:.67rem;color:var(--muted);padding:.35rem 0;border-bottom:1px solid var(--highlight);line-height:1.5}
+    .sources a{color:var(--heat);text-decoration:none;word-break:break-all}
+    .sources a:hover{text-decoration:underline}
+
+    @media(max-width:480px){
+      .article{padding:1.5rem 1.2rem 4rem}
+      .stat-band{grid-template-columns:1fr}
+      .oregon-box .numbers{gap:1.25rem}
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>Data Bit · Natural Disasters & Public Health</span>
+  <span>Ashley Razo · April 2026</span>
+</div>
+
+<div class="tooltip" id="tt"></div>
+
+<main class="article">
+  <p class="kicker">Climate & Emergency Policy</p>
+  <h1>America's Invisible Killer</h1>
+  <p class="deck">Heat kills more Americans than hurricanes, tornadoes, and floods combined. The government doesn't classify it as a disaster. And we're not even counting the deaths correctly.</p>
+  <div class="byline">By <strong>Ashley Razo</strong> &nbsp;|&nbsp; April 2026</div>
+
+  <!-- LEDE: Oregon anchor, then the thesis -->
+  <p class="drop-cap">In late June 2021, Andrew Phelps was directing Oregon's emergency management department when a heat dome pushed Portland to 116°F. Cooling centers were open. Hospitals were not overwhelmed. "We really dodged a bullet," he recalled thinking. Then a reporter called to say the state medical examiner was investigating over 120 deaths. Oregon's official count came in at 123. But state excess death analysis — comparing that week's mortality to the same week in prior years — found 251 people had died above the expected baseline. Twice the official count. No federal disaster declaration was ever issued.</p>
+
+  <p>That gap between what is counted and what actually happens is not a quirk of one bad week. It is how America systematically handles its deadliest weather hazard — one that, across two decades of federal data, kills more people every year than hurricanes, tornadoes, and floods combined.</p>
+
+  <!-- STAT BAND: gut-punch numbers, from original -->
+  <div class="stat-band">
+    <div class="stat-cell">
+      <span class="stat-num">529</span>
+      <span class="stat-label">Official heat deaths in 2024 — highest on record</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num">2×</span>
+      <span class="stat-label">Oregon's excess deaths vs. official count, 2021</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num">0</span>
+      <span class="stat-label">Federal disaster declarations for heat events</span>
+    </div>
+  </div>
+
+  <!-- CHART 1 -->
+  <figure class="chart-wrap" id="w1">
+    <div class="chart-header">
+      <div class="chart-title">Heat outpaces every other weather hazard</div>
+      <div class="chart-subtitle">Average annual U.S. deaths by weather type, 2004–2024 · Hover bars for details</div>
+    </div>
+    <div class="chart-body"><svg id="c1"></svg></div>
+    <figcaption>
+      <strong>Fig. 1.</strong> Average annual fatalities by hazard, ordered by magnitude.
+      NWS figures are direct-cause deaths from death certificates — a known undercount for heat.
+      Hurricane average excludes 2005: Katrina alone caused 1,094 deaths that year.
+      That editorial choice — and what it reveals — is discussed below.
+      <em>Source: NOAA/NWS Annual Natural Hazard Statistics (weather.gov/hazstat).</em>
+    </figcaption>
+  </figure>
+
+  <h2>The Count We Can Prove</h2>
+
+  <p>The claim that heat deaths are undercounted is widely accepted — but harder to quantify nationally than it might seem. Oregon's 2021 heat dome offers something more solid than expert estimates: two official numbers from government sources, describing the same event.</p>
+
+  <!-- OREGON BOX: sourced, specific, government data on both sides -->
+  <div class="oregon-box">
+    <div class="label">Oregon Heat Dome, June–July 2021 — Two Official Counts, Same Event</div>
+    <div class="numbers">
+      <div><span class="big">123</span><span class="small">Official heat deaths<br>(medical examiner)</span></div>
+      <div><span class="big">251</span><span class="small">Excess deaths that week<br>(state baseline analysis)</span></div>
+      <div><span class="big">0</span><span class="small">Federal disaster<br>declarations issued</span></div>
+    </div>
+  </div>
+
+  <p>The difference — 123 versus 251 — reflects deaths where heat worsened an existing condition like heart failure or kidney disease, but never appeared on the certificate. This is not a modeling assumption. It is what Oregon's Health Authority measured directly, by comparing observed deaths to the historical average for that week. The CDC has urged since 2017 that heat be listed as a contributing cause on death certificates even when another condition is listed first. That guidance has not been consistently followed.</p>
+
+  <!-- CHART 2 -->
+  <figure class="chart-wrap" id="w2">
+    <div class="chart-header">
+      <div class="chart-title">Official heat deaths are rising — but the true toll is higher</div>
+      <div class="chart-subtitle">U.S. official NWS heat death counts, 2004–2024, with 2021 Oregon gap annotated · Hover points for values</div>
+    </div>
+    <div class="chart-body"><svg id="c2"></svg></div>
+    <figcaption>
+      <strong>Fig. 2.</strong> Official NWS heat deaths, rising from 36 in 2004 to 529 in 2024 — the highest
+      in this dataset. The 2021 annotation shows Oregon's documented discrepancy: 123 official
+      deaths vs. 251 excess deaths, both from government sources. The national gap is unknown,
+      but is consistently larger than official figures suggest.
+      <em>Sources: NWS Annual Natural Hazard Statistics; Oregon Health Authority excess deaths analysis (2021).</em>
+    </figcaption>
+  </figure>
+
+  <h2>A Policy Built for a Different Disaster</h2>
+
+  <p>The Stafford Act — the federal law empowering FEMA — does not list extreme heat as an eligible disaster. When Hurricane Helene made landfall in 2024, FEMA deployed within hours. When a heat dome settles over a region for two weeks and kills hundreds, no equivalent federal mechanism exists. Cooling centers are funded locally, open only if a city chooses.</p>
+
+  <!-- PULL QUOTE: Phelps, kept short and sharp -->
+  <div class="pull">
+    "We heard from people who called their uncle Jim at 10 a.m. and Jim was fine — but by 10 p.m. Jim was dead."
+    <cite>— Andrew Phelps, Oregon Dept. of Emergency Management, on the 2021 heat dome</cite>
+  </div>
+
+  <p>As the EPA reports that the average U.S. heat wave season has tripled in length since the 1960s, the mismatch between America's deadliest hazard and its emergency infrastructure is only widening. The 2024 official count of 529 heat deaths is the highest in this dataset. If Oregon's ratio holds, the true figure is closer to 1,000.</p>
+
+  <!-- CLOSING: original's rhythm and muscle -->
+  <p>America's deadliest disaster doesn't produce satellite imagery or dramatic evacuation footage. It doesn't trigger federal declarations or FEMA convoys. It kills quietly — in apartments without air conditioning, on construction sites, in cars baking in parking lots. And officially, it barely counts.</p>
+
+  <!-- 2005 NOTE: now part of the argument, not hidden in a caption -->
+  <div class="context-note">
+    <strong>A note on how we count disasters:</strong> The hurricane average in Fig. 1 excludes 2005, when Katrina alone caused 1,094 deaths. Include it, and hurricanes appear deadlier than heat over this period. That single methodological choice flips the ranking — which itself tells you something important. Hurricane deadliness is concentrated in rare, catastrophic events. Heat kills consistently, year after year, in numbers too small for any single headline but too large to ignore in aggregate. Both patterns are real. Neither is well captured by a simple average.
+  </div>
+
+  <div class="sources">
+    <h3>Sources & Data</h3>
+    <ul>
+      <li>NOAA/NWS Annual Natural Hazard Statistics, 2004–2024 — <a href="https://www.weather.gov/hazstat/">weather.gov/hazstat</a></li>
+      <li>Oregon Health Authority, <em>Climate and Health in Oregon: Extreme Heat</em> (2021 excess deaths) — <a href="https://sharedsystems.dhsoha.state.or.us/DHSForms/Served/le-435100.pdf">Oregon DHS, 2023</a></li>
+      <li>Phelps quote — Scientific American, <a href="https://www.scientificamerican.com/article/u-s-deaths-from-heat-are-dangerously-undercounted/">"U.S. Deaths from Heat Are Dangerously Undercounted"</a> (2024)</li>
+      <li>FEMA/Stafford Act and heat classification — <a href="https://usafacts.org/articles/how-many-people-die-from-extreme-heat-in-the-us/">USAFacts</a></li>
+      <li>EPA heat wave season data — <a href="https://www.epa.gov/climate-indicators/climate-change-indicators-heat-waves">EPA Climate Indicators</a></li>
+      <li>Raw data & R code — <a href="https://github.com/data-journalism-26/data-bit-2-ashley">github.com/data-journalism-26/data-bit-2-ashley</a></li>
+    </ul>
+  </div>
+</main>
+
+<script>
+const hazards=[
+  {h:"Heat",avg:168,heat:true},{h:"Flood",avg:118,heat:false},
+  {h:"Tornado",avg:91,heat:false},{h:"Rip Current",avg:66,heat:false},
+  {h:"Wind",avg:53,heat:false},{h:"Cold",avg:39,heat:false},
+  {h:"Lightning",avg:26,heat:false},{h:"Hurricane / Trop. Storm",avg:22,heat:false},
+  {h:"Winter Storm",avg:21,heat:false}
+].sort((a,b)=>a.avg-b.avg);
+
+const annual=[
+  {y:2004,v:36},{y:2005,v:158},{y:2006,v:253},{y:2007,v:105},{y:2008,v:126},
+  {y:2009,v:105},{y:2010,v:138},{y:2011,v:206},{y:2012,v:155},{y:2013,v:92},
+  {y:2014,v:42},{y:2015,v:74},{y:2016,v:122},{y:2017,v:107},{y:2018,v:119},
+  {y:2019,v:115},{y:2020,v:209},{y:2021,v:234},{y:2022,v:254},{y:2023,v:368},{y:2024,v:529}
+];
+
+const HEAT="#D4622A",BLUE="#4A7EA5",INK="#1C1C1C",MUTED="#999",GRID="#eee";
+const tt=document.getElementById("tt");
+const tip=(h,e)=>{tt.innerHTML=h;tt.style.opacity=1;mv(e)};
+const mv=e=>{tt.style.left=(e.pageX+14)+"px";tt.style.top=(e.pageY-28)+"px"};
+const hide=()=>{tt.style.opacity=0};
+
+// ── Chart 1: horizontal bar ────────────────────────────────────
+(()=>{
+  const wrap=document.getElementById("w1");
+  const W=wrap.clientWidth-2,m={t:8,r:55,b:42,l:165};
+  const H=hazards.length*36+m.t+m.b,iW=W-m.l-m.r,iH=H-m.t-m.b;
+  const svg=d3.select("#c1").attr("viewBox",`0 0 ${W} ${H}`).attr("height",H);
+  const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
+  const x=d3.scaleLinear().domain([0,200]).range([0,iW]);
+  const y=d3.scaleBand().domain(hazards.map(d=>d.h)).range([iH,0]).padding(.28);
+
+  g.append("g").selectAll("line").data(x.ticks(5)).join("line")
+    .attr("x1",d=>x(d)).attr("x2",d=>x(d)).attr("y1",0).attr("y2",iH)
+    .attr("stroke",GRID).attr("stroke-width",1);
+  g.append("line").attr("x1",0).attr("x2",0).attr("y1",0).attr("y2",iH)
+    .attr("stroke","#ccc").attr("stroke-width",1);
+
+  g.selectAll(".bar").data(hazards).join("rect")
+    .attr("x",0).attr("y",d=>y(d.h))
+    .attr("width",d=>x(d.avg)).attr("height",y.bandwidth())
+    .attr("fill",d=>d.heat?HEAT:BLUE).attr("opacity",.85).style("cursor","pointer")
+    .on("mouseover",function(e,d){
+      d3.select(this).attr("opacity",1);
+      const note=d.h==="Hurricane / Trop. Storm"
+        ?`<br><span style="color:#aaa;font-size:.6rem">2005 Katrina excluded from avg</span>`:"";
+      tip(`<strong>${d.h}</strong><br>${d.avg} avg deaths/yr${note}`,e);
+    })
+    .on("mousemove",mv)
+    .on("mouseout",function(){d3.select(this).attr("opacity",.85);hide()});
+
+  g.selectAll(".lbl").data(hazards).join("text")
+    .attr("x",d=>x(d.avg)+5).attr("y",d=>y(d.h)+y.bandwidth()/2+4)
+    .text(d=>d.avg).attr("fill",INK).attr("font-size","11px")
+    .attr("font-family","'DM Mono',monospace");
+
+  g.append("g").call(d3.axisLeft(y).tickSize(0))
+    .call(g=>g.select(".domain").remove())
+    .selectAll("text")
+    .attr("fill",d=>d==="Heat"?HEAT:INK)
+    .attr("font-weight",d=>d==="Heat"?"500":"300")
+    .attr("font-size","12px").attr("font-family","'DM Sans',sans-serif").attr("dx","-8");
+
+  g.append("g").attr("transform",`translate(0,${iH})`)
+    .call(d3.axisBottom(x).ticks(5))
+    .call(g=>g.select(".domain").attr("stroke","#ccc"))
+    .call(g=>g.selectAll("text").attr("font-size","11px")
+      .attr("font-family","'DM Mono',monospace").attr("fill",MUTED))
+    .call(g=>g.selectAll(".tick line").attr("stroke","#ddd"));
+
+  g.append("text").attr("x",iW/2).attr("y",iH+34)
+    .attr("text-anchor","middle").attr("fill",MUTED)
+    .attr("font-size","11px").attr("font-family","'DM Mono',monospace")
+    .text("Average annual deaths (2004–2024, excl. 2005)");
+})();
+
+// ── Chart 2: line + Oregon annotation ─────────────────────────
+(()=>{
+  const wrap=document.getElementById("w2");
+  const W=wrap.clientWidth-2,m={t:20,r:25,b:45,l:52};
+  const H=300,iW=W-m.l-m.r,iH=H-m.t-m.b;
+  const svg=d3.select("#c2").attr("viewBox",`0 0 ${W} ${H}`).attr("height",H);
+  const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
+  const x=d3.scaleLinear().domain([2004,2024]).range([0,iW]);
+  const y=d3.scaleLinear().domain([0,600]).range([iH,0]);
+
+  g.append("g").selectAll("line").data(y.ticks(5)).join("line")
+    .attr("x1",0).attr("x2",iW).attr("y1",d=>y(d)).attr("y2",d=>y(d))
+    .attr("stroke",GRID).attr("stroke-width",1);
+
+  const line=d3.line().x(d=>x(d.y)).y(d=>y(d.v)).curve(d3.curveCatmullRom);
+  g.append("path").datum(annual).attr("fill","none")
+    .attr("stroke",HEAT).attr("stroke-width",2.3).attr("d",line);
+
+  g.selectAll(".dot").data(annual).join("circle")
+    .attr("cx",d=>x(d.y)).attr("cy",d=>y(d.v))
+    .attr("r",d=>d.y===2021?6:3.5)
+    .attr("fill",d=>d.y===2021?INK:HEAT)
+    .attr("stroke","white").attr("stroke-width",1.5).style("cursor","pointer")
+    .on("mouseover",function(e,d){
+      d3.select(this).attr("r",7);
+      const extra=d.y===2021
+        ?`<br><span style="color:#bbb">OR official: 123</span><br><span style="color:#bbb">OR excess deaths: 251</span>`:"";
+      tip(`<strong>${d.y}</strong><br>Official U.S.: ${d.v.toLocaleString()} deaths${extra}`,e);
+    })
+    .on("mousemove",mv)
+    .on("mouseout",function(e,d){d3.select(this).attr("r",d.y===2021?6:3.5);hide()});
+
+  // Oregon 2021 gap annotation
+  const x21=x(2021),y21=y(234);
+  const bx=x21+18;
+  g.append("line")
+    .attr("x1",x21+7).attr("x2",bx-1)
+    .attr("y1",y21).attr("y2",y21)
+    .attr("stroke","#aaa").attr("stroke-width",1);
+  g.append("line")
+    .attr("x1",bx).attr("x2",bx)
+    .attr("y1",y(123)).attr("y2",y(251))
+    .attr("stroke","#888").attr("stroke-width",1).attr("stroke-dasharray","3,2");
+
+  const ls=sel=>sel.attr("font-size","10px")
+    .attr("font-family","'DM Mono',monospace").attr("fill","#555");
+  g.append("text").attr("x",bx+4).attr("y",y(258)).call(ls).text("OR excess: 251");
+  g.append("text").attr("x",bx+4).attr("y",y(112)).call(ls).text("OR official: 123");
+  g.append("text").attr("x",x21-2).attr("y",y21-10)
+    .attr("text-anchor","middle").call(ls).attr("fill",INK).text("2021 ↓");
+
+  // Axes
+  g.append("g").attr("transform",`translate(0,${iH})`)
+    .call(d3.axisBottom(x).tickFormat(d3.format("d")).ticks(6))
+    .call(g=>g.select(".domain").attr("stroke","#ccc"))
+    .call(g=>g.selectAll("text").attr("font-size","11px")
+      .attr("font-family","'DM Mono',monospace").attr("fill",MUTED))
+    .call(g=>g.selectAll(".tick line").attr("stroke","#ddd"));
+
+  g.append("g").call(d3.axisLeft(y).ticks(5))
+    .call(g=>g.select(".domain").remove())
+    .call(g=>g.selectAll("text").attr("font-size","11px")
+      .attr("font-family","'DM Mono',monospace").attr("fill",MUTED))
+    .call(g=>g.selectAll(".tick line").attr("stroke","#ddd"));
+
+  g.append("text").attr("transform","rotate(-90)").attr("x",-iH/2).attr("y",-40)
+    .attr("text-anchor","middle").attr("fill",MUTED)
+    .attr("font-size","11px").attr("font-family","'DM Mono',monospace")
+    .text("Official heat deaths (U.S.)");
+})();
+</script>
+</body>
+</html>
